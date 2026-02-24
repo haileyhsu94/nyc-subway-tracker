@@ -14,6 +14,8 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 import os
 import json
 import logging
+import time
+from threading import Lock
 from datetime import datetime
 import pytz
 from dotenv import load_dotenv
@@ -60,9 +62,28 @@ def load_stations():
 
 load_stations()
 
+# Feed-level TTL cache — keyed by feed URL, stores (NYCTFeed, fetched_at timestamp).
+# Shared across requests so parallel threads/workers benefit from each other's fetches.
+FEED_CACHE: dict = {}
+FEED_CACHE_TTL = 30  # seconds — matches the frontend auto-refresh interval
+FEED_CACHE_LOCK = Lock()
+
 
 def fetch_feed(feed_url):
-    return NYCTFeed(feed_url, api_key=MTA_API_KEY)
+    """Return a cached NYCTFeed if fresh, otherwise fetch and cache a new one."""
+    now = time.monotonic()
+
+    with FEED_CACHE_LOCK:
+        entry = FEED_CACHE.get(feed_url)
+        if entry and (now - entry[1]) < FEED_CACHE_TTL:
+            return entry[0]
+
+    feed = NYCTFeed(feed_url, api_key=MTA_API_KEY)
+
+    with FEED_CACHE_LOCK:
+        FEED_CACHE[feed_url] = (feed, time.monotonic())
+
+    return feed
 
 def get_arrivals_from_feed(feed, station_ids):
     """Extract arrival info for the given station IDs from a single feed."""
