@@ -7,36 +7,82 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1>🚇 NYC Subway Tracker</h1>
-            <p>Real-time subway arrival information</p>
+    <div class="page-shell">
+        <header class="hero">
+            <div class="hero-board" role="img" aria-label="Subway station board inspired header">
+                <p class="board-kicker">New York City Transit</p>
+                <h1 class="board-title">Subway Tracker</h1>
+                <p class="board-subtitle">Find your station and see the next train in seconds.</p>
+            </div>
         </header>
 
-        <div class="search-section">
-            <div class="input-group">
-                <label for="station-search">Search for a Station:</label>
-                <input type="text" id="station-search" placeholder="Type station name (e.g., Times Square, Court Sq)..." autocomplete="off">
-                <div id="suggestions" class="suggestions"></div>
+        <main class="app-panel">
+            <section class="search-section">
+                <div class="input-group">
+                    <label for="station-search">Find a station</label>
+                    <input type="text" id="station-search" placeholder="Times Sq, Court Sq, Atlantic Av..." autocomplete="off">
+                    <div id="suggestions" class="suggestions"></div>
+                </div>
+                
+                <button id="search-btn" class="wf-btn wf-btn--primary wf-btn--regular wf-btn--full" onclick="searchArrivals()">Get Live Arrivals</button>
+
+                <div class="quick-access">
+                    <div class="quick-block">
+                        <div class="quick-title">Recent</div>
+                        <div id="recent-stations" class="chip-list"></div>
+                    </div>
+                    <div class="quick-block">
+                        <div class="quick-title">Favorites</div>
+                        <div id="favorite-stations" class="chip-list"></div>
+                    </div>
+                </div>
+
+                <details class="route-directory">
+                    <summary>Route directory</summary>
+                    <div class="route-directory-list" aria-label="All subway routes">
+                        <button type="button" class="board-route route-directory-btn route-1" onclick="onRouteDirectorySelect('1', this)">1</button>
+                        <button type="button" class="board-route route-directory-btn route-2" onclick="onRouteDirectorySelect('2', this)">2</button>
+                        <button type="button" class="board-route route-directory-btn route-3" onclick="onRouteDirectorySelect('3', this)">3</button>
+                        <button type="button" class="board-route route-directory-btn route-4" onclick="onRouteDirectorySelect('4', this)">4</button>
+                        <button type="button" class="board-route route-directory-btn route-5" onclick="onRouteDirectorySelect('5', this)">5</button>
+                        <button type="button" class="board-route route-directory-btn route-6" onclick="onRouteDirectorySelect('6', this)">6</button>
+                        <button type="button" class="board-route route-directory-btn route-7" onclick="onRouteDirectorySelect('7', this)">7</button>
+                        <button type="button" class="board-route route-directory-btn route-A" onclick="onRouteDirectorySelect('A', this)">A</button>
+                        <button type="button" class="board-route route-directory-btn route-B" onclick="onRouteDirectorySelect('B', this)">B</button>
+                        <button type="button" class="board-route route-directory-btn route-C" onclick="onRouteDirectorySelect('C', this)">C</button>
+                        <button type="button" class="board-route route-directory-btn route-D" onclick="onRouteDirectorySelect('D', this)">D</button>
+                        <button type="button" class="board-route route-directory-btn route-E" onclick="onRouteDirectorySelect('E', this)">E</button>
+                        <button type="button" class="board-route route-directory-btn route-F" onclick="onRouteDirectorySelect('F', this)">F</button>
+                        <button type="button" class="board-route route-directory-btn route-G" onclick="onRouteDirectorySelect('G', this)">G</button>
+                        <button type="button" class="board-route route-directory-btn route-J" onclick="onRouteDirectorySelect('J', this)">J</button>
+                        <button type="button" class="board-route route-directory-btn route-Z" onclick="onRouteDirectorySelect('Z', this)">Z</button>
+                        <button type="button" class="board-route route-directory-btn route-L" onclick="onRouteDirectorySelect('L', this)">L</button>
+                        <button type="button" class="board-route route-directory-btn route-M" onclick="onRouteDirectorySelect('M', this)">M</button>
+                        <button type="button" class="board-route route-directory-btn route-N" onclick="onRouteDirectorySelect('N', this)">N</button>
+                        <button type="button" class="board-route route-directory-btn route-Q" onclick="onRouteDirectorySelect('Q', this)">Q</button>
+                        <button type="button" class="board-route route-directory-btn route-R" onclick="onRouteDirectorySelect('R', this)">R</button>
+                        <button type="button" class="board-route route-directory-btn route-W" onclick="onRouteDirectorySelect('W', this)">W</button>
+                        <button type="button" class="board-route route-directory-btn route-S" onclick="onRouteDirectorySelect('S', this)">S</button>
+                        <button type="button" class="board-route route-directory-btn route-SIR" onclick="onRouteDirectorySelect('SIR', this)">SIR</button>
+                    </div>
+                    <p class="route-directory-note">Tap a route to open citywide route board (stations + next bound arrivals).</p>
+                </details>
+            </section>
+
+            <div id="loading" class="loading" style="display: none;">
+                <div class="spinner"></div>
+                <p>Fetching real-time data...</p>
             </div>
-            
-            <button id="search-btn" onclick="searchArrivals()">Get Arrivals</button>
-        </div>
 
-        <div id="loading" class="loading" style="display: none;">
-            <div class="spinner"></div>
-            <p>Fetching real-time data...</p>
-        </div>
+            <div id="error-message" class="error-message" style="display: none;"></div>
 
-        <div id="error-message" class="error-message" style="display: none;"></div>
-
-        <div id="results" class="results-section" style="display: none;">
-            <div id="station-info"></div>
-            <div id="arrivals-list"></div>
-        </div>
+            <section id="results" class="results-section" style="display: none;">
+                <div id="station-info"></div>
+                <div id="arrivals-list"></div>
+            </section>
+        </main>
     </div>
 
     <script src="app.js"></script>
 </body>
 </html>
-

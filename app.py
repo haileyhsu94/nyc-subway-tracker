@@ -46,6 +46,11 @@ FEED_URLS = {
     'SIR': 'https://api-endpoint.mta.info/Dataservice/mtagtfsfeeds/nyct%2Fgtfs-si'
 }
 
+ROUTE_ORDER = ['1', '2', '3', '4', '5', '6', '7',
+               'A', 'B', 'C', 'D', 'E', 'F', 'G',
+               'J', 'Z', 'L', 'M', 'N', 'Q', 'R', 'W',
+               'S', 'SIR', 'H', 'FS']
+
 # Station lookup cached at startup — keyed by station id
 STATIONS_BY_ID = {}
 
@@ -118,6 +123,47 @@ def get_arrivals_from_feed(feed, station_ids):
     return arrivals
 
 
+def normalize_route_id(route_id):
+    """Normalize route IDs (e.g. 6X->6, SI->SIR)."""
+    if not route_id:
+        return ''
+
+    normalized = route_id.upper()
+    if normalized.endswith('X'):
+        normalized = normalized[:-1]
+    if normalized == 'SI':
+        normalized = 'SIR'
+    return normalized
+
+
+def route_matches(query_route, trip_route):
+    """Check whether a trip route belongs to requested route."""
+    query = normalize_route_id(query_route)
+    trip = normalize_route_id(trip_route)
+    if query == 'S':
+        return trip in {'S', 'GS', 'FS', 'H'}
+    return query == trip
+
+
+def get_direction_label(headsign, suffix):
+    if headsign:
+        return headsign
+    if suffix == 'N':
+        return 'Northbound'
+    if suffix == 'S':
+        return 'Southbound'
+    return 'Direction unknown'
+
+
+def direction_sort_key(direction_label):
+    direction = direction_label.lower()
+    if any(word in direction for word in ['uptown', 'north', 'manhattan', 'inwood', 'harlem']):
+        return (0, direction_label)
+    if any(word in direction for word in ['downtown', 'south', 'brooklyn', 'queens', 'coney']):
+        return (1, direction_label)
+    return (2, direction_label)
+
+
 @app.route('/')
 def index():
     return send_from_directory('static', 'index.html')
@@ -187,11 +233,6 @@ def get_arrivals():
                 seen_pairs.add(pair)
                 unique_arrivals.append(arrival)
 
-        ROUTE_ORDER = ['1', '2', '3', '4', '5', '6', '7',
-                       'A', 'B', 'C', 'D', 'E', 'F', 'G',
-                       'J', 'Z', 'L', 'M', 'N', 'Q', 'R', 'W',
-                       'S', 'SIR', 'H', 'FS']
-
         def route_sort_key(arrival):
             route = arrival['route']
             route_index = ROUTE_ORDER.index(route) if route in ROUTE_ORDER else 999
@@ -216,6 +257,93 @@ def get_arrivals():
     except Exception as e:
         logger.error(f"Unexpected error fetching arrivals for station {station_id}: {e}")
         return jsonify({'error': f'Error fetching arrivals: {str(e)}'}), 500
+
+
+@app.route('/api/route-board', methods=['GET'])
+def get_route_board():
+    """
+    Return route-wide next arrivals by station and bound.
+    Query Parameters:
+        route (str): Subway route (e.g., A, 1, Q, SIR)
+    """
+    route = request.args.get('route', '').strip().upper()
+    if not route:
+        return jsonify({'error': 'route parameter is required'}), 400
+
+    route = normalize_route_id(route)
+    if route not in ROUTE_ORDER and route not in {'GS', 'FS'}:
+        return jsonify({'error': f'Unsupported route: {route}'}), 400
+
+    # Keep earliest upcoming train for each (station, direction).
+    next_by_station_direction = {}
+
+    try:
+        with ThreadPoolExecutor(max_workers=len(FEED_URLS)) as executor:
+            futures = {
+                executor.submit(fetch_feed, url): feed_name
+                for feed_name, url in FEED_URLS.items()
+            }
+            for future in as_completed(futures):
+                feed_name = futures[future]
+                try:
+                    feed = future.result()
+                except Exception as e:
+                    logger.warning(f"Route board feed '{feed_name}' failed: {type(e).__name__}: {e}")
+                    continue
+
+                for trip in feed.trips:
+                    if not route_matches(route, trip.route_id):
+                        continue
+
+                    for stop_time_update in trip.stop_time_updates:
+                        arrival_time = stop_time_update.arrival
+                        stop_id = stop_time_update.stop_id
+                        if not arrival_time or not stop_id:
+                            continue
+
+                        current_time = datetime.now(arrival_time.tzinfo)
+                        minutes_until = int((arrival_time.timestamp() - current_time.timestamp()) / 60)
+
+                        # 60 minute window for route-board readability.
+                        if minutes_until < -1 or minutes_until > 60:
+                            continue
+
+                        suffix = stop_id[-1] if stop_id[-1] in ['N', 'S'] else ''
+                        base_station_id = stop_id[:-1] if suffix else stop_id
+                        direction = get_direction_label(trip.headsign_text, suffix)
+                        key = (base_station_id, direction)
+                        safe_minutes = max(0, minutes_until)
+
+                        existing = next_by_station_direction.get(key)
+                        if existing is None or safe_minutes < existing['minutes_until_arrival']:
+                            arrival_time_et = arrival_time.astimezone(EASTERN)
+                            next_by_station_direction[key] = {
+                                'direction': direction,
+                                'arrival_time': arrival_time_et.strftime('%I:%M:%S %p'),
+                                'minutes_until_arrival': safe_minutes
+                            }
+
+        stations_grouped = {}
+        for (station_id, direction), arrival_data in next_by_station_direction.items():
+            station_name = STATIONS_BY_ID.get(station_id, {}).get('name', f"Station {station_id}")
+            if station_id not in stations_grouped:
+                stations_grouped[station_id] = {
+                    'station_id': station_id,
+                    'station_name': station_name,
+                    'bounds': []
+                }
+            stations_grouped[station_id]['bounds'].append(arrival_data)
+
+        stations = list(stations_grouped.values())
+        stations.sort(key=lambda s: s['station_name'])
+        for station in stations:
+            station['bounds'].sort(key=lambda b: direction_sort_key(b['direction']))
+
+        return jsonify({'route': route, 'stations': stations})
+
+    except Exception as e:
+        logger.error(f"Unexpected error fetching route board for route {route}: {e}")
+        return jsonify({'error': f'Error fetching route board: {str(e)}'}), 500
 
 
 @app.route('/api/stations', methods=['GET'])
