@@ -52,6 +52,13 @@
 
                 <details class="route-directory">
                     <summary>Route directory</summary>
+                    <div id="route-legend-helper" class="route-color-legend" aria-live="polite">
+                        <p class="route-color-legend-title">Color groups</p>
+                        <p class="route-color-legend-text">
+                            Red: 1/2/3 · Green: 4/5/6 · Blue: A/C/E · Orange: B/D/F/M · Yellow: N/Q/R/W
+                        </p>
+                        <button type="button" id="route-legend-dismiss" class="route-color-legend-dismiss">Got it</button>
+                    </div>
                     <div class="route-directory-list" aria-label="All subway routes">
                         <sl-button class="board-route route-directory-btn route-1 sl-circle-btn" onclick="onRouteDirectorySelect('1', this)">1</sl-button>
                         <sl-button class="board-route route-directory-btn route-2 sl-circle-btn" onclick="onRouteDirectorySelect('2', this)">2</sl-button>

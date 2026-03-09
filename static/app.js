@@ -7,6 +7,7 @@
 const API_BASE_URL = '';
 const RECENT_STATIONS_KEY = 'nyc_subway_recent_stations';
 const FAVORITE_STATIONS_KEY = 'nyc_subway_favorite_stations';
+const ROUTE_LEGEND_SEEN_KEY = 'nyc_route_legend_seen';
 const MAX_RECENT_STATIONS = 5;
 const MAX_FAVORITE_STATIONS = 8;
 
@@ -19,6 +20,8 @@ let currentStationId = null;      // Currently displayed station ID
 let selectedDirectoryRoute = null; // Selected route from route directory
 let recentStationIds = [];        // Recently viewed station IDs (localStorage)
 let favoriteStationIds = [];      // Favorited station IDs (localStorage)
+let lastDataUpdatedAt = null;     // Last successful data refresh timestamp
+let freshnessIntervalId = null;   // Interval id for freshness labels
 
 // Load app state on page load
 document.addEventListener('DOMContentLoaded', () => {
@@ -26,8 +29,50 @@ document.addEventListener('DOMContentLoaded', () => {
     setupSearch();
     setupQuickAccessInteractions();
     setupHeroLampFlicker();
+    setupRouteLegendHelper();
     loadStations();
 });
+
+function setupRouteLegendHelper() {
+    const legend = document.getElementById('route-legend-helper');
+    const dismissBtn = document.getElementById('route-legend-dismiss');
+    if (!legend || !dismissBtn) return;
+
+    const alreadySeen = localStorage.getItem(ROUTE_LEGEND_SEEN_KEY) === '1';
+    legend.style.display = alreadySeen ? 'none' : 'block';
+
+    dismissBtn.addEventListener('click', () => {
+        localStorage.setItem(ROUTE_LEGEND_SEEN_KEY, '1');
+        legend.style.display = 'none';
+    });
+}
+
+function markDataUpdatedNow() {
+    lastDataUpdatedAt = new Date();
+    updateFreshnessLabels();
+
+    if (freshnessIntervalId !== null) return;
+    freshnessIntervalId = setInterval(updateFreshnessLabels, 15000);
+}
+
+function getFreshnessText() {
+    if (!lastDataUpdatedAt) return 'Updated just now';
+
+    const diffSeconds = Math.max(0, Math.floor((Date.now() - lastDataUpdatedAt.getTime()) / 1000));
+    if (diffSeconds < 10) return 'Updated just now';
+    if (diffSeconds < 60) return `Updated ${diffSeconds}s ago`;
+
+    const diffMins = Math.floor(diffSeconds / 60);
+    if (diffMins === 1) return 'Updated 1 min ago';
+    return `Updated ${diffMins} mins ago`;
+}
+
+function updateFreshnessLabels() {
+    const text = getFreshnessText();
+    document.querySelectorAll('.data-freshness').forEach(el => {
+        el.textContent = text;
+    });
+}
 
 function setupHeroLampFlicker() {
     const heroEntrance = document.querySelector('.hero-entrance');
@@ -376,6 +421,8 @@ function displayResults(data) {
                 </div>
             </div>
             <div class="route-count">${routeCount} line${routeCount === 1 ? '' : 's'} active in the next 30 minutes</div>
+            <div class="data-freshness">${getFreshnessText()}</div>
+            <div id="active-filter-summary" class="active-filter-summary">All lines · All bounds</div>
             <div id="direction-filters"></div>
             <div id="route-filters"></div>
         `;
@@ -392,7 +439,8 @@ function displayResults(data) {
 
     const allArrivals = data.all_arrivals || data.arrivals || [];
     updateDirectionFilters(allArrivals, null);
-    updateRouteFilters(data.arrivals, null);
+    updateRouteFilters(data.arrivals, null, selectedDirectionGroup);
+    updateActiveFilterSummary();
 
     // Display route-scoped bounds view
     displaySummaryView(allArrivals);
@@ -400,11 +448,24 @@ function displayResults(data) {
     resultsDiv.style.display = 'block';
 }
 
-function updateRouteFilters(arrivals, currentFilter) {
-    const routes = [...new Set(arrivals.map(a => a.route))].sort();
+function getRoutesForDirection(arrivals, directionFilter) {
+    const safeArrivals = Array.isArray(arrivals) ? arrivals : [];
+    return [...new Set(
+        safeArrivals
+            .filter(arrival => arrival && arrival.route && matchesDirectionGroup(arrival.direction, directionFilter))
+            .map(arrival => arrival.route)
+    )].sort();
+}
+
+function updateRouteFilters(arrivals, currentFilter, directionFilter = null) {
+    const routes = getRoutesForDirection(arrivals, directionFilter);
     const filtersDiv = document.getElementById('route-filters');
 
-    if (!filtersDiv || routes.length === 0) return;
+    if (!filtersDiv) return;
+    if (routes.length === 0) {
+        filtersDiv.innerHTML = '';
+        return;
+    }
 
     filtersDiv.innerHTML = `
         <div class="filter-label">Filter by line</div>
@@ -486,8 +547,26 @@ function updateDirectionFilters(arrivals, currentDirection) {
             ${groups.map(group =>
                 `<sl-button size="small" pill class="dir-filter-btn ${currentDirection === group.key ? 'active' : ''}" data-direction="${group.key}" aria-pressed="${currentDirection === group.key ? 'true' : 'false'}" onclick="filterByDirectionGroup('${group.key}', this)">${group.label}</sl-button>`
             ).join('')}
+            ${(selectedRoute !== null || selectedDirectionGroup !== null)
+                ? '<sl-button size="small" pill class="dir-filter-btn clear-filter-btn" onclick="resetActiveFilters()">Clear filters</sl-button>'
+                : ''
+            }
         </div>
     `;
+}
+
+function getDirectionGroupLabel(key) {
+    if (!key) return 'All bounds';
+    return DIRECTION_GROUPS.find(group => group.key === key)?.label || 'Selected bound';
+}
+
+function updateActiveFilterSummary() {
+    const summaryEl = document.getElementById('active-filter-summary');
+    if (!summaryEl) return;
+
+    const lineLabel = selectedRoute ? `Line ${selectedRoute}` : 'All lines';
+    const boundLabel = getDirectionGroupLabel(selectedDirectionGroup);
+    summaryEl.textContent = `${lineLabel} · ${boundLabel}`;
 }
 
 function displaySummaryView(arrivals) {
@@ -519,6 +598,8 @@ function filterByRoute(route, buttonEl) {
         // Show filtered view for specific route
         displayFilteredView(route);
     }
+    updateDirectionFilters(currentArrivalsData.all_arrivals || currentArrivalsData.arrivals || [], selectedDirectionGroup);
+    updateActiveFilterSummary();
 
 }
 
@@ -535,11 +616,32 @@ function filterByDirectionGroup(directionGroup, buttonEl) {
         buttonEl.setAttribute('aria-pressed', 'true');
     }
 
+    const validRoutes = getRoutesForDirection(currentArrivalsData?.arrivals || [], selectedDirectionGroup);
+    if (selectedRoute !== null && !validRoutes.includes(selectedRoute)) {
+        selectedRoute = null;
+    }
+
+    updateRouteFilters(currentArrivalsData?.arrivals || [], selectedRoute, selectedDirectionGroup);
+
     if (selectedRoute === null) {
         displaySummaryView(currentArrivalsData.all_arrivals || currentArrivalsData.arrivals || []);
     } else {
         displayFilteredView(selectedRoute);
     }
+    updateDirectionFilters(currentArrivalsData.all_arrivals || currentArrivalsData.arrivals || [], selectedDirectionGroup);
+    updateActiveFilterSummary();
+}
+
+function resetActiveFilters() {
+    selectedRoute = null;
+    selectedDirectionGroup = null;
+    syncRouteFilterActive(null);
+
+    const arrivals = currentArrivalsData?.all_arrivals || currentArrivalsData?.arrivals || [];
+    updateDirectionFilters(arrivals, null);
+    updateRouteFilters(currentArrivalsData?.arrivals || arrivals, null, null);
+    displaySummaryView(arrivals);
+    updateActiveFilterSummary();
 }
 
 function showError(message) {
@@ -572,6 +674,7 @@ async function refreshArrivals() {
         }
 
         const data = await response.json();
+        markDataUpdatedNow();
 
         // Update the display with new data
         currentArrivalsData = data;
@@ -585,7 +688,12 @@ async function refreshArrivals() {
 
         // Update the filters in case routes changed
         updateDirectionFilters(data.all_arrivals || data.arrivals || [], selectedDirectionGroup);
-        updateRouteFilters(data.arrivals, selectedRoute);
+        const validRoutes = getRoutesForDirection(data.arrivals || [], selectedDirectionGroup);
+        if (selectedRoute !== null && !validRoutes.includes(selectedRoute)) {
+            selectedRoute = null;
+        }
+        updateRouteFilters(data.arrivals, selectedRoute, selectedDirectionGroup);
+        updateActiveFilterSummary();
     } catch (error) {
         showError(`Error: ${error.message}`);
     } finally {
@@ -628,6 +736,7 @@ async function onRouteDirectorySelect(route, buttonEl) {
         }
 
         const data = await response.json();
+        markDataUpdatedNow();
         renderRouteBoard(data);
     } catch (error) {
         showError(`Could not load route board: ${error.message}`);
@@ -655,6 +764,7 @@ function renderRouteBoard(data) {
             </h2>
         </div>
         <div class="route-count">${stations.length} station${stations.length === 1 ? '' : 's'} reporting next arrivals</div>
+        <div class="data-freshness">${getFreshnessText()}</div>
     `;
 
     if (stations.length === 0) {
@@ -691,7 +801,7 @@ function renderRouteBoard(data) {
                 <div class="route-board-cell route-board-head">${escapeHtml(primaryDirections[0])}</div>
                 <div class="route-board-cell route-board-head">${escapeHtml(primaryDirections[1])}</div>
 
-            ${stations.map(station => {
+            ${stations.map((station, rowIndex) => {
                 const stationName = escapeHtml(station.station_name || station.station_id || 'Unknown station');
                 const stationId = station.station_id || '';
                 const bounds = Array.isArray(station.bounds) ? station.bounds : [];
@@ -703,15 +813,16 @@ function renderRouteBoard(data) {
                 });
                 const boundOne = boundByDirection[primaryDirections[0]];
                 const boundTwo = boundByDirection[primaryDirections[1]];
+                const rowAltClass = rowIndex % 2 === 1 ? 'row-alt' : '';
 
                 return `
-                    <div class="route-board-cell route-board-station-cell">
+                    <div class="route-board-cell route-board-station-cell ${rowAltClass}">
                         <button type="button" class="route-board-station-link" data-station-id="${escapeHtml(stationId)}" onclick="openStationFromRouteBoard(this.dataset.stationId)">
                             ${stationName}
                         </button>
                     </div>
-                    <div class="route-board-cell">${renderRouteBoardEtaCell(boundOne)}</div>
-                    <div class="route-board-cell">${renderRouteBoardEtaCell(boundTwo)}</div>
+                    <div class="route-board-cell ${rowAltClass}">${renderRouteBoardEtaCell(boundOne)}</div>
+                    <div class="route-board-cell ${rowAltClass}">${renderRouteBoardEtaCell(boundTwo)}</div>
                 `;
             }).join('')}
             </div>
@@ -794,6 +905,7 @@ async function fetchAndDisplayStationArrivals(stationId, stationName) {
         }
 
         const data = await response.json();
+        markDataUpdatedNow();
 
         document.getElementById('loading').style.display = 'none';
         addRecentStation(stationId);
@@ -839,7 +951,7 @@ function renderRouteBoundSections(arrivals, routeFilter = null, directionGroupFi
 
     const routes = Object.keys(grouped).sort();
     if (routes.length === 0) {
-        arrivalsList.innerHTML = '<div class="no-arrivals">No arrivals found for this selection in the next 30 minutes.</div>';
+        arrivalsList.innerHTML = `<div class="no-arrivals">${getNoArrivalsMessage(routeFilter, directionGroupFilter)}</div>`;
         return;
     }
 
@@ -876,8 +988,8 @@ function renderRouteBoundSections(arrivals, routeFilter = null, directionGroupFi
                     <div class="station-route-grid-head">${escapeHtml(dirA)}</div>
                     <div class="station-route-grid-head">${escapeHtml(dirB)}</div>
                     ${Array.from({ length: maxRows }).map((_, idx) => `
-                        <div class="station-route-grid-cell">${renderRouteBoardEtaCell(arrA[idx])}</div>
-                        <div class="station-route-grid-cell">${renderRouteBoardEtaCell(arrB[idx])}</div>
+                        <div class="station-route-grid-cell ${idx % 2 === 1 ? 'row-alt' : ''}">${renderRouteBoardEtaCell(arrA[idx])}</div>
+                        <div class="station-route-grid-cell ${idx % 2 === 1 ? 'row-alt' : ''}">${renderRouteBoardEtaCell(arrB[idx])}</div>
                     `).join('')}
                 </div>
                 <div class="station-route-grid-foot">
@@ -887,6 +999,20 @@ function renderRouteBoundSections(arrivals, routeFilter = null, directionGroupFi
             </section>
         `;
     }).join('');
+}
+
+function getNoArrivalsMessage(routeFilter, directionGroupFilter) {
+    const bound = getDirectionGroupLabel(directionGroupFilter);
+    if (routeFilter && directionGroupFilter) {
+        return `No ${bound} arrivals for line ${routeFilter} in the next 30 minutes.`;
+    }
+    if (routeFilter) {
+        return `No arrivals for line ${routeFilter} in the next 30 minutes.`;
+    }
+    if (directionGroupFilter) {
+        return `No ${bound} arrivals in the next 30 minutes.`;
+    }
+    return 'No arrivals found in the next 30 minutes.';
 }
 
 function escapeHtml(text) {
