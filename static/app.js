@@ -10,6 +10,31 @@ const FAVORITE_STATIONS_KEY = 'nyc_subway_favorite_stations';
 const ROUTE_LEGEND_SEEN_KEY = 'nyc_route_legend_seen';
 const MAX_RECENT_STATIONS = 5;
 const MAX_FAVORITE_STATIONS = 8;
+const SEARCH_DEBOUNCE_MS = 200;
+
+/**
+ * Wrap a function so it only runs after `wait` ms have passed without further calls.
+ * The returned function exposes a `cancel()` method to drop any pending invocation.
+ */
+function debounce(fn, wait) {
+    let timeoutId = null;
+    const debounced = function (...args) {
+        if (timeoutId !== null) {
+            clearTimeout(timeoutId);
+        }
+        timeoutId = setTimeout(() => {
+            timeoutId = null;
+            fn.apply(this, args);
+        }, wait);
+    };
+    debounced.cancel = () => {
+        if (timeoutId !== null) {
+            clearTimeout(timeoutId);
+            timeoutId = null;
+        }
+    };
+    return debounced;
+}
 
 // Global state
 let allStations = [];             // All available stations for search
@@ -257,9 +282,8 @@ function setupSearch() {
     const searchInput = document.getElementById('station-search');
     const suggestionsDiv = document.getElementById('suggestions');
 
-    // Show autocomplete suggestions as user types
-    searchInput.addEventListener('input', (e) => {
-        const searchTerm = e.target.value.trim().toLowerCase();
+    function renderSuggestions(rawValue) {
+        const searchTerm = rawValue.trim().toLowerCase();
 
         if (searchTerm.length < 2) {
             suggestionsDiv.innerHTML = '';
@@ -293,10 +317,26 @@ function setupSearch() {
                     searchInput.value = name;
                     suggestionsDiv.innerHTML = '';
                     suggestionsDiv.style.display = 'none';
+                    debouncedRender.cancel();
                     searchArrivals();
                 }
             });
         });
+    }
+
+    const debouncedRender = debounce(renderSuggestions, SEARCH_DEBOUNCE_MS);
+
+    // Show autocomplete suggestions as user types (debounced)
+    searchInput.addEventListener('input', (e) => {
+        const value = e.target.value;
+        // Hide stale suggestions immediately when the field is cleared or too short
+        if (value.trim().length < 2) {
+            debouncedRender.cancel();
+            suggestionsDiv.innerHTML = '';
+            suggestionsDiv.style.display = 'none';
+            return;
+        }
+        debouncedRender(value);
     });
 
     // Hide suggestions when clicking outside
@@ -309,6 +349,7 @@ function setupSearch() {
     // Allow Enter key in search to trigger arrivals
     searchInput.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') {
+            debouncedRender.cancel();
             suggestionsDiv.style.display = 'none';
             searchArrivals();
         }
