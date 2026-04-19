@@ -142,6 +142,22 @@ body {
     color: #f5f8fc;
     position: relative;
     z-index: 1;
+    display: block;
+    text-align: left;
+    border: 0;
+    font: inherit;
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.2s ease;
+}
+
+.hero-board:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 12px 28px -16px rgba(17, 45, 78, 0.45);
+}
+
+.hero-board:focus-visible {
+    outline: 2px solid #1d6fe0;
+    outline-offset: 3px;
 }
 
 .board-kicker {
@@ -728,6 +744,41 @@ sl-button::part(label) {
 .results-section {
     padding: var(--space-5);
     animation: fadeUp 0.22s ease-out;
+}
+
+.back-home-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: var(--space-3);
+    padding: 8px 14px 8px 10px;
+    border: 1px solid #d9e1ea;
+    border-radius: 999px;
+    background: #ffffff;
+    color: #112D4E;
+    font: inherit;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+}
+
+.back-home-btn:hover {
+    background: #f1f5fb;
+    border-color: #bcd0e6;
+}
+
+.back-home-btn:active {
+    transform: translateY(1px);
+}
+
+.back-home-btn:focus-visible {
+    outline: 2px solid #1d6fe0;
+    outline-offset: 2px;
+}
+
+.back-home-btn svg {
+    flex-shrink: 0;
 }
 
 #station-info {

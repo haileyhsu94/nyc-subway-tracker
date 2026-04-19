@@ -22,16 +22,64 @@ let recentStationIds = [];        // Recently viewed station IDs (localStorage)
 let favoriteStationIds = [];      // Favorited station IDs (localStorage)
 let lastDataUpdatedAt = null;     // Last successful data refresh timestamp
 let freshnessIntervalId = null;   // Interval id for freshness labels
+let navigationGeneration = 0;     // Bumped on goHome() to invalidate in-flight fetches
 
 // Load app state on page load
 document.addEventListener('DOMContentLoaded', () => {
     loadQuickAccessState();
     setupSearch();
     setupQuickAccessInteractions();
+    setupHomeNavigation();
     setupHeroLampFlicker();
     setupRouteLegendHelper();
     loadStations();
 });
+
+function setupHomeNavigation() {
+    document.querySelectorAll('#home-link, #back-home-btn').forEach(el => {
+        el.addEventListener('click', goHome);
+    });
+}
+
+function goHome() {
+    navigationGeneration += 1;
+    currentArrivalsData = null;
+    currentStationId = null;
+    selectedRoute = null;
+    selectedDirectionGroup = null;
+    selectedDirectoryRoute = null;
+    syncRouteDirectoryActive(null);
+
+    const results = document.getElementById('results');
+    const errorMessage = document.getElementById('error-message');
+    const loading = document.getElementById('loading');
+    const stationInfo = document.getElementById('station-info');
+    const arrivalsList = document.getElementById('arrivals-list');
+    const searchInput = document.getElementById('station-search');
+    const suggestions = document.getElementById('suggestions');
+
+    if (results) results.style.display = 'none';
+    if (errorMessage) errorMessage.style.display = 'none';
+    if (loading) loading.style.display = 'none';
+    if (stationInfo) stationInfo.innerHTML = '';
+    if (arrivalsList) arrivalsList.innerHTML = '';
+    if (searchInput) searchInput.value = '';
+    if (suggestions) {
+        suggestions.innerHTML = '';
+        suggestions.style.display = 'none';
+    }
+
+    const searchButton = document.getElementById('search-btn');
+    if (searchButton) setButtonBusy(searchButton, false);
+    const refreshBtn = document.getElementById('refresh-btn');
+    if (refreshBtn) {
+        refreshBtn.classList.remove('spinning');
+        refreshBtn.disabled = false;
+        refreshBtn.setAttribute('aria-busy', 'false');
+    }
+
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
 
 function setupRouteLegendHelper() {
     const legend = document.getElementById('route-legend-helper');
@@ -675,8 +723,11 @@ async function refreshArrivals() {
     // Hide error messages
     document.getElementById('error-message').style.display = 'none';
 
+    const generation = navigationGeneration;
     try {
         const response = await fetch(`${API_BASE_URL}/api/arrivals?station_id=${encodeURIComponent(currentStationId)}`);
+
+        if (generation !== navigationGeneration) return;
 
         if (!response.ok) {
             const data = await response.json();
@@ -685,6 +736,7 @@ async function refreshArrivals() {
         }
 
         const data = await response.json();
+        if (generation !== navigationGeneration) return;
         markDataUpdatedNow();
 
         // Update the display with new data
@@ -706,9 +758,10 @@ async function refreshArrivals() {
         updateRouteFilters(data.arrivals, selectedRoute, selectedDirectionGroup);
         updateActiveFilterSummary();
     } catch (error) {
+        if (generation !== navigationGeneration) return;
         showError(`Error: ${error.message}`);
     } finally {
-        // Remove spinning animation
+        // Remove spinning animation (always — goHome() also clears this, but make refresh state consistent here too)
         if (refreshBtn) {
             refreshBtn.classList.remove('spinning');
             refreshBtn.disabled = false;
@@ -738,8 +791,11 @@ async function onRouteDirectorySelect(route, buttonEl) {
 
     document.getElementById('loading').style.display = 'block';
 
+    const generation = navigationGeneration;
     try {
         const response = await fetch(`${API_BASE_URL}/api/route-board?route=${encodeURIComponent(route)}`);
+
+        if (generation !== navigationGeneration) return;
 
         if (!response.ok) {
             const data = await response.json();
@@ -747,13 +803,17 @@ async function onRouteDirectorySelect(route, buttonEl) {
         }
 
         const data = await response.json();
+        if (generation !== navigationGeneration) return;
         markDataUpdatedNow();
         renderRouteBoard(data);
     } catch (error) {
+        if (generation !== navigationGeneration) return;
         showError(`Could not load route board: ${error.message}`);
         renderRouteBoardError(route);
     } finally {
-        document.getElementById('loading').style.display = 'none';
+        if (generation === navigationGeneration) {
+            document.getElementById('loading').style.display = 'none';
+        }
     }
 }
 
@@ -905,8 +965,11 @@ async function fetchAndDisplayStationArrivals(stationId, stationName) {
     document.getElementById('loading').style.display = 'block';
     setButtonBusy(searchButton, true);
 
+    const generation = navigationGeneration;
     try {
         const response = await fetch(`${API_BASE_URL}/api/arrivals?station_id=${encodeURIComponent(stationId)}`);
+
+        if (generation !== navigationGeneration) return;
 
         if (!response.ok) {
             const data = await response.json();
@@ -916,16 +979,20 @@ async function fetchAndDisplayStationArrivals(stationId, stationName) {
         }
 
         const data = await response.json();
+        if (generation !== navigationGeneration) return;
         markDataUpdatedNow();
 
         document.getElementById('loading').style.display = 'none';
         addRecentStation(stationId);
         displayResults(data);
     } catch (error) {
+        if (generation !== navigationGeneration) return;
         document.getElementById('loading').style.display = 'none';
         showError(`Error: ${error.message}. Make sure the backend server is running.`);
     } finally {
-        setButtonBusy(searchButton, false);
+        if (generation === navigationGeneration) {
+            setButtonBusy(searchButton, false);
+        }
     }
 }
 
