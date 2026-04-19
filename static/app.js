@@ -69,6 +69,15 @@ function goHome() {
         suggestions.style.display = 'none';
     }
 
+    const searchButton = document.getElementById('search-btn');
+    if (searchButton) setButtonBusy(searchButton, false);
+    const refreshBtn = document.getElementById('refresh-btn');
+    if (refreshBtn) {
+        refreshBtn.classList.remove('spinning');
+        refreshBtn.disabled = false;
+        refreshBtn.setAttribute('aria-busy', 'false');
+    }
+
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
@@ -714,8 +723,11 @@ async function refreshArrivals() {
     // Hide error messages
     document.getElementById('error-message').style.display = 'none';
 
+    const generation = navigationGeneration;
     try {
         const response = await fetch(`${API_BASE_URL}/api/arrivals?station_id=${encodeURIComponent(currentStationId)}`);
+
+        if (generation !== navigationGeneration) return;
 
         if (!response.ok) {
             const data = await response.json();
@@ -724,6 +736,7 @@ async function refreshArrivals() {
         }
 
         const data = await response.json();
+        if (generation !== navigationGeneration) return;
         markDataUpdatedNow();
 
         // Update the display with new data
@@ -745,9 +758,10 @@ async function refreshArrivals() {
         updateRouteFilters(data.arrivals, selectedRoute, selectedDirectionGroup);
         updateActiveFilterSummary();
     } catch (error) {
+        if (generation !== navigationGeneration) return;
         showError(`Error: ${error.message}`);
     } finally {
-        // Remove spinning animation
+        // Remove spinning animation (always — goHome() also clears this, but make refresh state consistent here too)
         if (refreshBtn) {
             refreshBtn.classList.remove('spinning');
             refreshBtn.disabled = false;
