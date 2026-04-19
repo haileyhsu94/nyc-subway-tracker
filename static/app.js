@@ -342,6 +342,7 @@ function setupSearch() {
     // Hide suggestions when clicking outside
     document.addEventListener('click', (e) => {
         if (!searchInput.contains(e.target) && !suggestionsDiv.contains(e.target)) {
+            debouncedRender.cancel();
             suggestionsDiv.style.display = 'none';
         }
     });
