@@ -22,6 +22,7 @@ let recentStationIds = [];        // Recently viewed station IDs (localStorage)
 let favoriteStationIds = [];      // Favorited station IDs (localStorage)
 let lastDataUpdatedAt = null;     // Last successful data refresh timestamp
 let freshnessIntervalId = null;   // Interval id for freshness labels
+let navigationGeneration = 0;     // Bumped on goHome() to invalidate in-flight fetches
 
 // Load app state on page load
 document.addEventListener('DOMContentLoaded', () => {
@@ -41,6 +42,7 @@ function setupHomeNavigation() {
 }
 
 function goHome() {
+    navigationGeneration += 1;
     currentArrivalsData = null;
     currentStationId = null;
     selectedRoute = null;
@@ -775,8 +777,11 @@ async function onRouteDirectorySelect(route, buttonEl) {
 
     document.getElementById('loading').style.display = 'block';
 
+    const generation = navigationGeneration;
     try {
         const response = await fetch(`${API_BASE_URL}/api/route-board?route=${encodeURIComponent(route)}`);
+
+        if (generation !== navigationGeneration) return;
 
         if (!response.ok) {
             const data = await response.json();
@@ -784,13 +789,17 @@ async function onRouteDirectorySelect(route, buttonEl) {
         }
 
         const data = await response.json();
+        if (generation !== navigationGeneration) return;
         markDataUpdatedNow();
         renderRouteBoard(data);
     } catch (error) {
+        if (generation !== navigationGeneration) return;
         showError(`Could not load route board: ${error.message}`);
         renderRouteBoardError(route);
     } finally {
-        document.getElementById('loading').style.display = 'none';
+        if (generation === navigationGeneration) {
+            document.getElementById('loading').style.display = 'none';
+        }
     }
 }
 
@@ -942,8 +951,11 @@ async function fetchAndDisplayStationArrivals(stationId, stationName) {
     document.getElementById('loading').style.display = 'block';
     setButtonBusy(searchButton, true);
 
+    const generation = navigationGeneration;
     try {
         const response = await fetch(`${API_BASE_URL}/api/arrivals?station_id=${encodeURIComponent(stationId)}`);
+
+        if (generation !== navigationGeneration) return;
 
         if (!response.ok) {
             const data = await response.json();
@@ -953,16 +965,20 @@ async function fetchAndDisplayStationArrivals(stationId, stationName) {
         }
 
         const data = await response.json();
+        if (generation !== navigationGeneration) return;
         markDataUpdatedNow();
 
         document.getElementById('loading').style.display = 'none';
         addRecentStation(stationId);
         displayResults(data);
     } catch (error) {
+        if (generation !== navigationGeneration) return;
         document.getElementById('loading').style.display = 'none';
         showError(`Error: ${error.message}. Make sure the backend server is running.`);
     } finally {
-        setButtonBusy(searchButton, false);
+        if (generation === navigationGeneration) {
+            setButtonBusy(searchButton, false);
+        }
     }
 }
 
