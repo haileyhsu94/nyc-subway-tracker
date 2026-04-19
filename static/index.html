@@ -11,11 +11,11 @@
     <div class="page-shell">
         <header class="hero">
             <div class="hero-entrance">
-                <div class="hero-board" role="img" aria-label="Subway station board inspired header">
+                <button type="button" id="home-link" class="hero-board" aria-label="Return to homepage">
                     <p class="board-kicker">New York City Transit</p>
                     <h1 class="board-title">Subway Tracker</h1>
                     <p class="board-subtitle">Live arrivals for every station — both bounds at a glance.</p>
-                </div>
+                </button>
             </div>
         </header>
 
@@ -98,6 +98,10 @@
             <div id="error-message" class="error-message" style="display: none;"></div>
 
             <section id="results" class="results-section" style="display: none;">
+                <button type="button" id="back-home-btn" class="back-home-btn" aria-label="Back to homepage">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                    <span>Back to home</span>
+                </button>
                 <div id="station-info"></div>
                 <div id="arrivals-list"></div>
             </section>

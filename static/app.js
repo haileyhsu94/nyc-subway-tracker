@@ -28,10 +28,47 @@ document.addEventListener('DOMContentLoaded', () => {
     loadQuickAccessState();
     setupSearch();
     setupQuickAccessInteractions();
+    setupHomeNavigation();
     setupHeroLampFlicker();
     setupRouteLegendHelper();
     loadStations();
 });
+
+function setupHomeNavigation() {
+    document.querySelectorAll('#home-link, #back-home-btn').forEach(el => {
+        el.addEventListener('click', goHome);
+    });
+}
+
+function goHome() {
+    currentArrivalsData = null;
+    currentStationId = null;
+    selectedRoute = null;
+    selectedDirectionGroup = null;
+    selectedDirectoryRoute = null;
+    syncRouteDirectoryActive(null);
+
+    const results = document.getElementById('results');
+    const errorMessage = document.getElementById('error-message');
+    const loading = document.getElementById('loading');
+    const stationInfo = document.getElementById('station-info');
+    const arrivalsList = document.getElementById('arrivals-list');
+    const searchInput = document.getElementById('station-search');
+    const suggestions = document.getElementById('suggestions');
+
+    if (results) results.style.display = 'none';
+    if (errorMessage) errorMessage.style.display = 'none';
+    if (loading) loading.style.display = 'none';
+    if (stationInfo) stationInfo.innerHTML = '';
+    if (arrivalsList) arrivalsList.innerHTML = '';
+    if (searchInput) searchInput.value = '';
+    if (suggestions) {
+        suggestions.innerHTML = '';
+        suggestions.style.display = 'none';
+    }
+
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
 
 function setupRouteLegendHelper() {
     const legend = document.getElementById('route-legend-helper');
