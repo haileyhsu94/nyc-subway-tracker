@@ -71,7 +71,7 @@ body {
     color: var(--ink);
     min-height: 100vh;
     background: var(--bg-1);
-    padding: var(--space-3) var(--space-3) 108px;
+    padding: var(--space-3);
 }
 
 html,
@@ -1385,7 +1385,7 @@ sl-button.filter-route-SIR::part(base) { background-color: #003087; }
    Progressively enhance for tablet (>=681px) and desktop (>=821px). */
 @media (min-width: 681px) {
     body {
-        padding: var(--space-5) var(--space-4) 88px;
+        padding: var(--space-5) var(--space-4);
     }
 
     .hero {
