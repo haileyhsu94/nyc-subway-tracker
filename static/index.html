@@ -20,30 +20,18 @@
         </header>
 
         <main class="app-panel">
-            <section class="search-section">
-                <div class="search-card">
-                    <div class="input-group">
-                        <span class="input-icon" aria-hidden="true">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                        </span>
-                        <input type="text" id="station-search" placeholder="Search a station — Times Sq, Court Sq, Atlantic Av…" autocomplete="off" aria-label="Search a subway station">
-                        <div id="suggestions" class="suggestions"></div>
-                    </div>
-                    <p class="search-hint">Pick a station from suggestions — or type the full name and press Enter.</p>
+            <div class="quick-access" id="quick-access">
+                <div class="quick-block" id="quick-block-recent" hidden>
+                    <div class="quick-title">Recent</div>
+                    <div id="recent-stations" class="chip-list"></div>
                 </div>
-
-                <div class="quick-access" id="quick-access">
-                    <div class="quick-block" id="quick-block-recent" hidden>
-                        <div class="quick-title">Recent</div>
-                        <div id="recent-stations" class="chip-list"></div>
-                    </div>
-                    <div class="quick-block" id="quick-block-favorites" hidden>
-                        <div class="quick-title">Favorites</div>
-                        <div id="favorite-stations" class="chip-list"></div>
-                    </div>
+                <div class="quick-block" id="quick-block-favorites" hidden>
+                    <div class="quick-title">Favorites</div>
+                    <div id="favorite-stations" class="chip-list"></div>
                 </div>
+            </div>
 
-                <details class="route-directory">
+            <details class="route-directory">
                     <summary>Route directory</summary>
                     <div id="route-legend-helper" class="route-color-legend" aria-live="polite">
                         <p class="route-color-legend-title">Color groups</p>
@@ -78,9 +66,8 @@
                         <sl-button class="board-route route-directory-btn route-S sl-circle-btn" onclick="onRouteDirectorySelect('S', this)">S</sl-button>
                         <sl-button class="board-route route-directory-btn route-SIR sl-circle-btn" onclick="onRouteDirectorySelect('SIR', this)">SIR</sl-button>
                     </div>
-                    <p class="route-directory-note">Tap a route to open citywide route board (stations + next bound arrivals).</p>
-                </details>
-            </section>
+                <p class="route-directory-note">Tap a route to open citywide route board (stations + next bound arrivals).</p>
+            </details>
 
             <div id="loading" class="loading" style="display: none;">
                 <div class="spinner"></div>
@@ -94,6 +81,19 @@
                 <div id="arrivals-list"></div>
             </section>
         </main>
+    </div>
+
+    <div class="search-dock" role="search">
+        <div class="search-card">
+            <div class="input-group">
+                <span class="input-icon" aria-hidden="true">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                </span>
+                <input type="text" id="station-search" placeholder="Search a station — Times Sq, Court Sq, Atlantic Av…" autocomplete="off" aria-label="Search a subway station">
+                <div id="suggestions" class="suggestions"></div>
+            </div>
+            <p class="search-hint">Pick a station from suggestions — or type the full name and press Enter.</p>
+        </div>
     </div>
 
     <script src="app.js"></script>

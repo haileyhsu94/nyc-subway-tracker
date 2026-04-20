@@ -71,7 +71,7 @@ body {
     color: var(--ink);
     min-height: 100vh;
     background: var(--bg-1);
-    padding: var(--space-3);
+    padding: var(--space-3) var(--space-3) calc(140px + env(safe-area-inset-bottom, 0px));
 }
 
 html,
@@ -220,7 +220,7 @@ button.route-directory-btn.active {
 }
 
 .route-directory {
-    margin-top: 0;
+    margin-top: var(--space-3);
     border: 1px solid #d6dee6;
     border-radius: var(--radius-md);
     background: #f8fafc;
@@ -301,25 +301,32 @@ button.route-directory-btn.active {
     background: var(--panel);
     border: 1px solid var(--panel-border);
     border-radius: var(--radius-xl);
+    padding: var(--space-4);
     overflow: visible;
 }
 
-.search-section {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-3);
-    padding: var(--space-4);
-    background: var(--surface);
-    border-bottom: 1px solid var(--panel-border);
-    border-radius: var(--radius-xl);
+.search-dock {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 50;
+    padding: var(--space-3) var(--space-3) calc(var(--space-3) + env(safe-area-inset-bottom, 0px));
+    background: rgba(249, 247, 247, 0.94);
+    backdrop-filter: saturate(150%) blur(10px);
+    -webkit-backdrop-filter: saturate(150%) blur(10px);
+    border-top: 1px solid rgba(17, 45, 78, 0.08);
+    box-shadow: 0 -12px 28px -18px rgba(17, 45, 78, 0.35);
 }
 
 .search-card {
+    max-width: 720px;
+    margin: 0 auto;
     background: #fff;
     border: 1px solid #c9d3e0;
     border-radius: var(--radius-lg);
     padding: var(--space-3);
-    box-shadow: 0 6px 20px -12px rgba(17, 45, 78, 0.28);
+    box-shadow: 0 10px 30px -16px rgba(17, 45, 78, 0.28);
 }
 
 .input-group {
@@ -535,16 +542,17 @@ sl-button::part(label) {
 
 .suggestions {
     position: absolute;
-    top: calc(100% + 4px);
+    bottom: calc(100% + 6px);
     left: 0;
     right: 0;
     z-index: 40;
     background: #fff;
     border: 1px solid #b6c2cf;
     border-radius: var(--radius-md);
-    max-height: 320px;
+    max-height: min(320px, 50vh);
     overflow-y: auto;
     display: none;
+    box-shadow: 0 -10px 24px -14px rgba(17, 45, 78, 0.35);
 }
 
 .suggestion-item {
@@ -1385,7 +1393,7 @@ sl-button.filter-route-SIR::part(base) { background-color: #003087; }
    Progressively enhance for tablet (>=681px) and desktop (>=821px). */
 @media (min-width: 681px) {
     body {
-        padding: var(--space-5) var(--space-4);
+        padding: var(--space-5) var(--space-4) calc(160px + env(safe-area-inset-bottom, 0px));
     }
 
     .hero {
@@ -1422,8 +1430,8 @@ sl-button.filter-route-SIR::part(base) { background-color: #003087; }
         padding: var(--space-2) var(--space-3);
     }
 
-    .search-section {
-        padding: var(--space-5);
+    .search-dock {
+        padding: var(--space-4) var(--space-4) calc(var(--space-4) + env(safe-area-inset-bottom, 0px));
     }
 
     .search-card {
