@@ -14,7 +14,43 @@
                 <div class="hero-board" role="img" aria-label="Subway station board inspired header">
                     <p class="board-kicker">New York City Transit</p>
                     <h1 class="board-title">Subway Tracker</h1>
-                    <p class="board-subtitle">Live arrivals for every station — both bounds at a glance.</p>
+                    <details class="route-directory">
+                        <summary>Route directory</summary>
+                        <div id="route-legend-helper" class="route-color-legend" aria-live="polite">
+                            <p class="route-color-legend-title">Color groups</p>
+                            <p class="route-color-legend-text">
+                                Red: 1/2/3 · Green: 4/5/6 · Blue: A/C/E · Orange: B/D/F/M · Yellow: N/Q/R/W
+                            </p>
+                            <button type="button" id="route-legend-dismiss" class="route-color-legend-dismiss">Got it</button>
+                        </div>
+                        <div class="route-directory-list" aria-label="All subway routes">
+                            <sl-button class="board-route route-directory-btn route-1 sl-circle-btn" onclick="onRouteDirectorySelect('1', this)">1</sl-button>
+                            <sl-button class="board-route route-directory-btn route-2 sl-circle-btn" onclick="onRouteDirectorySelect('2', this)">2</sl-button>
+                            <sl-button class="board-route route-directory-btn route-3 sl-circle-btn" onclick="onRouteDirectorySelect('3', this)">3</sl-button>
+                            <sl-button class="board-route route-directory-btn route-4 sl-circle-btn" onclick="onRouteDirectorySelect('4', this)">4</sl-button>
+                            <sl-button class="board-route route-directory-btn route-5 sl-circle-btn" onclick="onRouteDirectorySelect('5', this)">5</sl-button>
+                            <sl-button class="board-route route-directory-btn route-6 sl-circle-btn" onclick="onRouteDirectorySelect('6', this)">6</sl-button>
+                            <sl-button class="board-route route-directory-btn route-7 sl-circle-btn" onclick="onRouteDirectorySelect('7', this)">7</sl-button>
+                            <sl-button class="board-route route-directory-btn route-A sl-circle-btn" onclick="onRouteDirectorySelect('A', this)">A</sl-button>
+                            <sl-button class="board-route route-directory-btn route-B sl-circle-btn" onclick="onRouteDirectorySelect('B', this)">B</sl-button>
+                            <sl-button class="board-route route-directory-btn route-C sl-circle-btn" onclick="onRouteDirectorySelect('C', this)">C</sl-button>
+                            <sl-button class="board-route route-directory-btn route-D sl-circle-btn" onclick="onRouteDirectorySelect('D', this)">D</sl-button>
+                            <sl-button class="board-route route-directory-btn route-E sl-circle-btn" onclick="onRouteDirectorySelect('E', this)">E</sl-button>
+                            <sl-button class="board-route route-directory-btn route-F sl-circle-btn" onclick="onRouteDirectorySelect('F', this)">F</sl-button>
+                            <sl-button class="board-route route-directory-btn route-G sl-circle-btn" onclick="onRouteDirectorySelect('G', this)">G</sl-button>
+                            <sl-button class="board-route route-directory-btn route-J sl-circle-btn" onclick="onRouteDirectorySelect('J', this)">J</sl-button>
+                            <sl-button class="board-route route-directory-btn route-Z sl-circle-btn" onclick="onRouteDirectorySelect('Z', this)">Z</sl-button>
+                            <sl-button class="board-route route-directory-btn route-L sl-circle-btn" onclick="onRouteDirectorySelect('L', this)">L</sl-button>
+                            <sl-button class="board-route route-directory-btn route-M sl-circle-btn" onclick="onRouteDirectorySelect('M', this)">M</sl-button>
+                            <sl-button class="board-route route-directory-btn route-N sl-circle-btn" onclick="onRouteDirectorySelect('N', this)">N</sl-button>
+                            <sl-button class="board-route route-directory-btn route-Q sl-circle-btn" onclick="onRouteDirectorySelect('Q', this)">Q</sl-button>
+                            <sl-button class="board-route route-directory-btn route-R sl-circle-btn" onclick="onRouteDirectorySelect('R', this)">R</sl-button>
+                            <sl-button class="board-route route-directory-btn route-W sl-circle-btn" onclick="onRouteDirectorySelect('W', this)">W</sl-button>
+                            <sl-button class="board-route route-directory-btn route-S sl-circle-btn" onclick="onRouteDirectorySelect('S', this)">S</sl-button>
+                            <sl-button class="board-route route-directory-btn route-SIR sl-circle-btn" onclick="onRouteDirectorySelect('SIR', this)">SIR</sl-button>
+                        </div>
+                        <p class="route-directory-note">Tap a route to open citywide route board (stations + next bound arrivals).</p>
+                    </details>
                 </div>
             </div>
         </header>
@@ -30,44 +66,6 @@
                     <div id="favorite-stations" class="chip-list"></div>
                 </div>
             </div>
-
-            <details class="route-directory">
-                    <summary>Route directory</summary>
-                    <div id="route-legend-helper" class="route-color-legend" aria-live="polite">
-                        <p class="route-color-legend-title">Color groups</p>
-                        <p class="route-color-legend-text">
-                            Red: 1/2/3 · Green: 4/5/6 · Blue: A/C/E · Orange: B/D/F/M · Yellow: N/Q/R/W
-                        </p>
-                        <button type="button" id="route-legend-dismiss" class="route-color-legend-dismiss">Got it</button>
-                    </div>
-                    <div class="route-directory-list" aria-label="All subway routes">
-                        <sl-button class="board-route route-directory-btn route-1 sl-circle-btn" onclick="onRouteDirectorySelect('1', this)">1</sl-button>
-                        <sl-button class="board-route route-directory-btn route-2 sl-circle-btn" onclick="onRouteDirectorySelect('2', this)">2</sl-button>
-                        <sl-button class="board-route route-directory-btn route-3 sl-circle-btn" onclick="onRouteDirectorySelect('3', this)">3</sl-button>
-                        <sl-button class="board-route route-directory-btn route-4 sl-circle-btn" onclick="onRouteDirectorySelect('4', this)">4</sl-button>
-                        <sl-button class="board-route route-directory-btn route-5 sl-circle-btn" onclick="onRouteDirectorySelect('5', this)">5</sl-button>
-                        <sl-button class="board-route route-directory-btn route-6 sl-circle-btn" onclick="onRouteDirectorySelect('6', this)">6</sl-button>
-                        <sl-button class="board-route route-directory-btn route-7 sl-circle-btn" onclick="onRouteDirectorySelect('7', this)">7</sl-button>
-                        <sl-button class="board-route route-directory-btn route-A sl-circle-btn" onclick="onRouteDirectorySelect('A', this)">A</sl-button>
-                        <sl-button class="board-route route-directory-btn route-B sl-circle-btn" onclick="onRouteDirectorySelect('B', this)">B</sl-button>
-                        <sl-button class="board-route route-directory-btn route-C sl-circle-btn" onclick="onRouteDirectorySelect('C', this)">C</sl-button>
-                        <sl-button class="board-route route-directory-btn route-D sl-circle-btn" onclick="onRouteDirectorySelect('D', this)">D</sl-button>
-                        <sl-button class="board-route route-directory-btn route-E sl-circle-btn" onclick="onRouteDirectorySelect('E', this)">E</sl-button>
-                        <sl-button class="board-route route-directory-btn route-F sl-circle-btn" onclick="onRouteDirectorySelect('F', this)">F</sl-button>
-                        <sl-button class="board-route route-directory-btn route-G sl-circle-btn" onclick="onRouteDirectorySelect('G', this)">G</sl-button>
-                        <sl-button class="board-route route-directory-btn route-J sl-circle-btn" onclick="onRouteDirectorySelect('J', this)">J</sl-button>
-                        <sl-button class="board-route route-directory-btn route-Z sl-circle-btn" onclick="onRouteDirectorySelect('Z', this)">Z</sl-button>
-                        <sl-button class="board-route route-directory-btn route-L sl-circle-btn" onclick="onRouteDirectorySelect('L', this)">L</sl-button>
-                        <sl-button class="board-route route-directory-btn route-M sl-circle-btn" onclick="onRouteDirectorySelect('M', this)">M</sl-button>
-                        <sl-button class="board-route route-directory-btn route-N sl-circle-btn" onclick="onRouteDirectorySelect('N', this)">N</sl-button>
-                        <sl-button class="board-route route-directory-btn route-Q sl-circle-btn" onclick="onRouteDirectorySelect('Q', this)">Q</sl-button>
-                        <sl-button class="board-route route-directory-btn route-R sl-circle-btn" onclick="onRouteDirectorySelect('R', this)">R</sl-button>
-                        <sl-button class="board-route route-directory-btn route-W sl-circle-btn" onclick="onRouteDirectorySelect('W', this)">W</sl-button>
-                        <sl-button class="board-route route-directory-btn route-S sl-circle-btn" onclick="onRouteDirectorySelect('S', this)">S</sl-button>
-                        <sl-button class="board-route route-directory-btn route-SIR sl-circle-btn" onclick="onRouteDirectorySelect('SIR', this)">SIR</sl-button>
-                    </div>
-                <p class="route-directory-note">Tap a route to open citywide route board (stations + next bound arrivals).</p>
-            </details>
 
             <div id="loading" class="loading" style="display: none;">
                 <div class="spinner"></div>
