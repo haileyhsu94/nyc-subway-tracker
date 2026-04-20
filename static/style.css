@@ -349,59 +349,12 @@ label {
     margin-bottom: var(--space-2);
 }
 
-.cta-dock {
-    position: fixed;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    padding: var(--space-3) var(--space-3) calc(var(--space-3) + env(safe-area-inset-bottom, 0px));
-    background: rgba(255, 255, 255, 0.94);
-    backdrop-filter: saturate(150%) blur(8px);
-    -webkit-backdrop-filter: saturate(150%) blur(8px);
-    border-top: 1px solid rgba(17, 45, 78, 0.08);
-    box-shadow: 0 -10px 24px -18px rgba(17, 45, 78, 0.35);
-    z-index: 50;
-}
-
-#search-btn {
-    display: block;
-    width: 100%;
-}
-
-#search-btn::part(base) {
-    width: 100%;
-    min-height: 54px;
-    border-radius: var(--radius-lg);
-    font-size: 1.05rem;
-    font-weight: 700;
+.search-hint {
+    margin: var(--space-3) 0 0;
+    font-size: var(--text-xs);
+    color: var(--ink-soft);
+    text-align: center;
     letter-spacing: 0.01em;
-    border: 1px solid transparent;
-    background: linear-gradient(140deg, #3f72af 0%, #112d4e 100%);
-    color: #fff;
-    box-shadow: 0 10px 24px -14px rgba(17, 45, 78, 0.6);
-    transition: transform 0.15s ease, filter 0.15s ease, box-shadow 0.15s ease;
-}
-
-#search-btn::part(base):hover {
-    filter: brightness(1.05);
-    transform: translateY(-1px);
-    box-shadow: 0 14px 28px -14px rgba(17, 45, 78, 0.7);
-}
-
-#search-btn::part(base):active {
-    transform: translateY(0);
-}
-
-.search-btn-label {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    line-height: 1;
-}
-
-.search-btn-icon {
-    flex: 0 0 auto;
 }
 
 /* Keep Shoelace button content centered in both axes */
@@ -1475,21 +1428,6 @@ sl-button.filter-route-SIR::part(base) { background-color: #003087; }
 
     .search-card {
         padding: var(--space-4);
-    }
-
-    .cta-dock {
-        position: static;
-        padding: 0;
-        margin-top: var(--space-3);
-        background: none;
-        backdrop-filter: none;
-        -webkit-backdrop-filter: none;
-        border-top: 0;
-        box-shadow: none;
-    }
-
-    #search-btn::part(base) {
-        min-height: 56px;
     }
 
     #station-search {

@@ -717,13 +717,6 @@ async function refreshArrivals() {
     }
 }
 
-function setButtonBusy(buttonEl, isBusy) {
-    if (!buttonEl) return;
-
-    buttonEl.disabled = isBusy;
-    buttonEl.setAttribute('aria-busy', isBusy ? 'true' : 'false');
-}
-
 async function onRouteDirectorySelect(route, buttonEl) {
     selectedDirectoryRoute = route;
     syncRouteDirectoryActive(route);
@@ -893,8 +886,6 @@ async function openStationFromRouteBoard(stationId) {
 }
 
 async function fetchAndDisplayStationArrivals(stationId, stationName) {
-    const searchButton = document.getElementById('search-btn');
-
     currentStationId = stationId;
     if (stationName) {
         document.getElementById('station-search').value = stationName;
@@ -903,7 +894,6 @@ async function fetchAndDisplayStationArrivals(stationId, stationName) {
     document.getElementById('results').style.display = 'none';
     document.getElementById('error-message').style.display = 'none';
     document.getElementById('loading').style.display = 'block';
-    setButtonBusy(searchButton, true);
 
     try {
         const response = await fetch(`${API_BASE_URL}/api/arrivals?station_id=${encodeURIComponent(stationId)}`);
@@ -924,8 +914,6 @@ async function fetchAndDisplayStationArrivals(stationId, stationName) {
     } catch (error) {
         document.getElementById('loading').style.display = 'none';
         showError(`Error: ${error.message}. Make sure the backend server is running.`);
-    } finally {
-        setButtonBusy(searchButton, false);
     }
 }
 
