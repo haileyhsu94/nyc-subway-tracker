@@ -1004,6 +1004,7 @@ button.refresh-btn:disabled {
 }
 
 .route-board-table-wrap {
+    grid-column: 1 / -1;
     border: 1px solid #dcdfe6;
     border-radius: 10px;
     background: #ffffff;
